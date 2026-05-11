@@ -8,14 +8,14 @@
   <a href="https://github.com/krish9219/rag-in-100-lines/stargazers"><img src="https://img.shields.io/github/stars/krish9219/rag-in-100-lines?style=flat-square&color=22d3ee" alt="stars"></a>
   <a href="https://github.com/krish9219/rag-in-100-lines/blob/main/LICENSE"><img src="https://img.shields.io/github/license/krish9219/rag-in-100-lines?style=flat-square&color=a3e635" alt="license"></a>
   <img src="https://img.shields.io/badge/python-3.10+-blue?style=flat-square" alt="python">
-  <img src="https://img.shields.io/badge/lines-93-fb7185?style=flat-square" alt="lines">
+  <img src="https://img.shields.io/badge/lines-100-fb7185?style=flat-square" alt="lines">
   <img src="https://img.shields.io/badge/deps-2-7c3aed?style=flat-square" alt="deps">
   <a href="https://github.com/krish9219/rag-in-100-lines/actions"><img src="https://img.shields.io/github/actions/workflow/status/krish9219/rag-in-100-lines/ci.yml?branch=main&style=flat-square&label=tests" alt="tests"></a>
 </p>
 
-Most RAG tutorials reach for LangChain, LlamaIndex, Pinecone, and three layers of abstraction before retrieving a single chunk. The actual algorithm is small. This repo is the algorithm, end-to-end, in 93 readable lines of Python — and a reading guide for everything around it.
+Most RAG tutorials reach for LangChain, LlamaIndex, Pinecone, and three layers of abstraction before retrieving a single chunk. The actual algorithm is small. This repo is the algorithm, end-to-end, in 100 readable lines of Python — and a reading guide for everything around it.
 
-> **Read the source first, the docs second.** [`rag.py`](rag.py) is 93 lines. The whole pipeline fits on one screen.
+> **Read the source first, the docs second.** [`rag.py`](rag.py) is 100 lines. The whole pipeline fits on one screen.
 
 ## Table of contents
 
@@ -94,7 +94,7 @@ python chat.py
 
 | File | Lines | Purpose |
 |---|---|---|
-| [`rag.py`](rag.py) | 93 | The whole engine: chunk, embed, index, retrieve, generate |
+| [`rag.py`](rag.py) | 100 | The whole engine: chunk, embed, index, retrieve, generate |
 | [`chat.py`](chat.py) | 25 | Interactive REPL |
 | [`test_rag.py`](test_rag.py) | 45 | Offline tests - no API calls, no spend |
 | [`docs/*.md`](docs/) | - | Sample knowledge base for the demo |

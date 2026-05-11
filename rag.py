@@ -1,26 +1,23 @@
-"""
-RAG in 100 lines — a minimal, dependency-light Retrieval-Augmented Generation engine.
-
-Pipeline:
-    docs -> chunk -> embed -> store (numpy) -> retrieve (cosine) -> generate
-
-Run:
-    export OPENAI_API_KEY=sk-...
-    python rag.py "What does this repo do?"
-"""
-
+"""RAG in 100 lines. docs -> chunk -> embed -> retrieve -> generate."""
 from __future__ import annotations
 
-import glob
-import json
-import os
-import pickle
-import sys
+import glob, json, pickle, sys
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 from openai import OpenAI
+
+EMBED_MODEL = "text-embedding-3-small"
+CHAT_MODEL = "gpt-4o-mini"
+CHUNK_SIZE = 500
+CHUNK_OVERLAP = 50
+TOP_K = 4
+INDEX_PATH = Path(".rag_index.pkl")
+SYSTEM = (
+    "Answer using ONLY the provided context. Cite sources as [1], [2], etc. "
+    "If the context is insufficient, say so plainly."
+)
 
 _CLIENT: OpenAI | None = None
 
@@ -32,14 +29,6 @@ def client() -> OpenAI:
     return _CLIENT
 
 
-EMBED_MODEL = "text-embedding-3-small"
-CHAT_MODEL = "gpt-4o-mini"
-CHUNK_SIZE = 500
-CHUNK_OVERLAP = 50
-TOP_K = 4
-INDEX_PATH = Path(".rag_index.pkl")
-
-
 @dataclass
 class Chunk:
     text: str
@@ -48,13 +37,13 @@ class Chunk:
 
 def chunk_text(text: str, source: str) -> list[Chunk]:
     words = text.split()
-    chunks: list[Chunk] = []
     step = CHUNK_SIZE - CHUNK_OVERLAP
+    out: list[Chunk] = []
     for i in range(0, len(words), step):
         body = " ".join(words[i : i + CHUNK_SIZE]).strip()
         if body:
-            chunks.append(Chunk(text=body, source=source))
-    return chunks
+            out.append(Chunk(text=body, source=source))
+    return out
 
 
 def embed(texts: list[str]) -> np.ndarray:
@@ -86,36 +75,26 @@ def load_index() -> tuple[list[Chunk], np.ndarray]:
 def retrieve(query: str, chunks: list[Chunk], vectors: np.ndarray, k: int = TOP_K) -> list[Chunk]:
     q = embed([query])[0]
     q /= np.linalg.norm(q) + 1e-12
-    scores = vectors @ q
-    top = np.argsort(-scores)[:k]
-    return [chunks[i] for i in top]
+    return [chunks[i] for i in np.argsort(-(vectors @ q))[:k]]
 
 
-def generate(query: str, context_chunks: list[Chunk]) -> str:
-    context = "\n\n".join(f"[{i+1}] ({c.source})\n{c.text}" for i, c in enumerate(context_chunks))
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "You answer questions using ONLY the provided context. "
-                "Cite sources as [1], [2], etc. If the context is insufficient, say so plainly."
-            ),
-        },
+def generate(query: str, hits: list[Chunk]) -> str:
+    context = "\n\n".join(f"[{i+1}] ({c.source})\n{c.text}" for i, c in enumerate(hits))
+    msgs = [
+        {"role": "system", "content": SYSTEM},
         {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"},
     ]
-    resp = client().chat.completions.create(model=CHAT_MODEL, messages=messages, temperature=0.2)
+    resp = client().chat.completions.create(model=CHAT_MODEL, messages=msgs, temperature=0.2)
     return resp.choices[0].message.content or ""
 
 
 def ask(query: str) -> dict:
     chunks, vectors = load_index()
     hits = retrieve(query, chunks, vectors)
-    answer = generate(query, hits)
-    return {"answer": answer, "sources": [{"source": c.source, "preview": c.text[:120]} for c in hits]}
+    return {"answer": generate(query, hits), "sources": [{"source": c.source, "preview": c.text[:120]} for c in hits]}
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print('Usage: python rag.py "your question"')
-        sys.exit(1)
+        print('Usage: python rag.py "your question"'); sys.exit(1)
     print(json.dumps(ask(" ".join(sys.argv[1:])), indent=2))
