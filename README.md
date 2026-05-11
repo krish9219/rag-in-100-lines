@@ -2,6 +2,8 @@
 
 > A complete Retrieval-Augmented Generation engine in one Python file. No vector database. No framework. No magic.
 
+![demo](docs/demo.gif)
+
 Most RAG tutorials reach for LangChain, LlamaIndex, Pinecone, and three layers of abstraction before retrieving a single chunk. The actual algorithm is small. This repo is the algorithm, end-to-end, in 100 readable lines.
 
 ```
