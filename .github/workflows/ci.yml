@@ -1,0 +1,30 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python test_rag.py
+      - name: Enforce 100-line limit on rag.py
+        run: |
+          lines=$(wc -l < rag.py)
+          echo "rag.py has $lines lines"
+          if [ "$lines" -gt 100 ]; then
+            echo "::error::rag.py exceeded 100 lines"
+            exit 1
+          fi
